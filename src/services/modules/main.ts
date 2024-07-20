@@ -1,4 +1,3 @@
-import { AxiosResponse } from 'axios'
 import request from '../request'
 import { LoginVO, Result, UserInfoVO } from '../types/main'
 
@@ -62,8 +61,8 @@ export function userList (params:any) : Promise<Result<any>> {
   return request.get('/admin/authority/user/list', { params })
 }
 
-export function roleList (params:any) : Promise<Result<any>> {
-  return request.get('/admin/authority/role/list', { params })
+export function roleList ({ kw, page, pageSize }:any) : Promise<Result<any>> {
+  return request.get('/admin/authority/role/list', { params: { kw, page, pageSize } })
 }
 
 export function userCreate (username:string, password:string) : Promise<Result<any>> {
@@ -72,6 +71,14 @@ export function userCreate (username:string, password:string) : Promise<Result<a
 
 export function userChange (userId:number, status:number) : Promise<Result<any>> {
   return request.post('/admin/authority/user/change', { userId, status })
+}
+
+export function userRoleChange (userId:number, roleIds:number[]) : Promise<Result<any>> {
+  return request.post('/admin/authority/user/role-change', { userId, roleIds })
+}
+
+export function userResetPassword (userId:number) : Promise<Result<any>> {
+  return request.post('/admin/authority/user/reset-password', { userId })
 }
 
 export function roleCreate (name:string, description:string) : Promise<Result<any>> {

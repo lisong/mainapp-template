@@ -8,8 +8,10 @@ import {
   message,
   Modal,
   Popconfirm,
+  Select,
   Switch,
-  Table
+  Table,
+  Typography
 } from 'antd'
 import { mainApi } from '@/services'
 
@@ -23,9 +25,17 @@ const User = (): JSX.Element => {
   const [data, setData] = useState<any[]>([])
   const [loading, setLoading] = useState<number>(0)
 
+  const [allRoles, setAllRoles] = useState([])
+
+  const [roleModal, setRoleModal] = useState<any>({
+    open: false,
+    selectedRoles: [],
+    userId: 0
+  })
+
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const showModal = ({ title, roleId, name, description }: any) => {
+  const showModal = () => {
     setIsModalOpen(true)
   }
 
@@ -63,6 +73,11 @@ const User = (): JSX.Element => {
         total: res.data.total
       })
     })
+    mainApi.roleList({ page: 1, pageSize: 1000 }).then((res) => {
+      setAllRoles(res.data?.items || [])
+    }).catch((e) => {
+
+    })
   }, [])
 
   const handleStatus = (userId: number, checked: boolean) => {
@@ -86,6 +101,52 @@ const User = (): JSX.Element => {
         }
       }))
       setLoading(0)
+    })
+  }
+
+  const resetPassword = (userId: number) => {
+    mainApi.userResetPassword(userId).then(res => {
+      Modal.success({
+        title: '重置成功',
+        content: <><Typography >
+          <Typography.Paragraph>
+            <Typography.Text>新密码:<Typography.Text code><strong>{res.data}</strong></Typography.Text></Typography.Text>
+          </Typography.Paragraph>
+        </Typography></>,
+        okText: '复制密码',
+        onOk() {
+          navigator.clipboard.writeText(res.data).then(() => {
+            message.success('复制成功')
+          }).catch((error) => {
+            message.error('复制失败，请重试.')
+            console.error('复制错误:', error)
+          })
+        }
+      })
+    }).catch(e => {
+
+    })
+  }
+
+  const showModifyRole = (userId: number, role: any[]) => {
+    setRoleModal({
+      ...roleModal,
+      open: true,
+      userId,
+      selectedRoles: role.map((it) => Number(it.roleId))
+    })
+  }
+  const handleSaveRole = () => {
+    mainApi.userRoleChange(roleModal.userId, roleModal.selectedRoles).then(res => {
+      setData(data.map(it => {
+        if (it.id === roleModal.userId) {
+          return { ...it, role: res.data || [] }
+        } else {
+          return it
+        }
+      }))
+    }).catch(e => {
+
     })
   }
 
@@ -127,7 +188,15 @@ const User = (): JSX.Element => {
       render(row: any) {
         return (
           <>
-            <Button type="link">重置密码</Button>
+            <Popconfirm
+              title={'重置密码？'}
+              onConfirm={() => resetPassword(row.id)}
+              okText="确认"
+              cancelText="取消"
+            >
+              <Button type="link">重置密码</Button>
+            </Popconfirm>
+            <Button type="link" onClick={() => { showModifyRole(row.id, row.role) }}>修改角色</Button>
           </>
         )
       }
@@ -190,6 +259,29 @@ const User = (): JSX.Element => {
                 <Input.Password autoComplete="off" />
               </Form.Item>
             </Form>
+          </Modal>
+        </Flex>
+        <Flex wrap gap="small" style={{ marginBottom: '10px' }}>
+          <Modal
+            title="修改用户角色"
+            open={roleModal.open}
+            onOk={handleSaveRole}
+            okText='保存'
+            onCancel={() => setRoleModal({ ...roleModal, open: false })}
+            styles={{ body: { height: 100 } }}
+          >
+            <Select
+              mode="multiple"
+              style={{ width: '70%', marginBottom: 20 }}
+              placeholder="选择角色"
+              value={roleModal.selectedRoles}
+              onChange={(e) => setRoleModal({ ...roleModal, selectedRoles: e })}
+            >
+              {allRoles.map((role: any) => (
+                <Select.Option key={role.id} value={role.id}>{role.name}</Select.Option>
+              ))}
+            </Select>
+            <br />
           </Modal>
         </Flex>
       </Card>

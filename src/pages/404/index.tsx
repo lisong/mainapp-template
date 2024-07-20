@@ -1,13 +1,13 @@
 import React from 'react'
-import styles from './index.module.less'
+import { Button, Result } from 'antd'
 
-const M404 = (): JSX.Element => {
-  return (
-    <div className={styles.m404}>
-      <div className={styles.m404Right}>
-        <p className={styles.m404Text}>你访问的内容不存在！</p>
-      </div>
-    </div>
-  )
-}
+const M404: React.FC = () => (
+  <Result
+    status="404"
+    title="404"
+    subTitle="Sorry, the page you visited does not exist."
+    extra={<Button type="primary">Back Home</Button>}
+  />
+)
+
 export default M404
