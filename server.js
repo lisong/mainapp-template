@@ -30,7 +30,7 @@ app.use(koaStatic(__dirname + '/dist/'))
 
 app.use(router.routes()).use(router.allowedMethods())
 
-const port = 8001
+const port = process.env.PORT || 8001
 
 app.listen(port, '127.0.0.1', () => {
   console.log(`Server listening on http://127.0.0.1:${port}`)
