@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
-import { Button, Card, Col, Divider, Flex, Form, Input, message, Modal, Row, Switch, Table } from 'antd'
+import { Button, Card, Col, Divider, Flex, Form, Input, message, Modal, Popconfirm, Row, Switch, Table } from 'antd'
 import { mainApi } from '@/services'
 import TextArea from 'antd/es/input/TextArea'
+import { title } from 'process'
 
 const Role = (): JSX.Element => {
   const [params, setParams] = useState<any>({
@@ -14,10 +15,16 @@ const Role = (): JSX.Element => {
 
   const [form] = Form.useForm()
 
+  const [modal, setModal] = useState({
+    title: ''
+  })
+
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [loading, setLoading] = useState<number>(0)
 
-  const showModal = () => {
+  const showModal = ({ title, roleId, name, description }: any) => {
+    setModal({ title })
+    form.setFieldsValue({ title, roleId, name, description })
     setIsModalOpen(true)
   }
 
@@ -36,17 +43,23 @@ const Role = (): JSX.Element => {
     form
       .validateFields()
       .then((values) => {
-        mainApi.roleCreate(values.name, values.description).then(rs => {
-          if (rs.statusCode === 200) {
-            setIsModalOpen(false)
-            message.success('新建成功')
-            setTimeout(function () {
-              window.location.reload()
-            }, 2000)
-          }
-        }).catch(e => {
+        console.log('values', values)
+        if (values.roleId) {
+          handleRoleChange(values)
+          setIsModalOpen(false)
+        } else {
+          mainApi.roleCreate(values.name, values.description).then(rs => {
+            if (rs.statusCode === 200) {
+              setIsModalOpen(false)
+              message.success('新建成功')
+              setTimeout(function () {
+                window.location.reload()
+              }, 2000)
+            }
+          }).catch(e => {
 
-        })
+          })
+        }
       })
       .catch((info) => {
         console.log('Validate Failed:', info)
@@ -54,16 +67,17 @@ const Role = (): JSX.Element => {
   }
 
   const handleCancel = () => {
+    form.resetFields()
     setIsModalOpen(false)
   }
 
-  const handleStatus = (roleId: number, checked: boolean) => {
+  const handleRoleChange = ({ roleId, status, name, description }: any) => {
     setLoading(roleId)
-    mainApi.roleChange(roleId, checked ? 1 : 2).then(rs => {
+    mainApi.roleChange({ roleId, status, name, description }).then(rs => {
       setLoading(0)
       setData(data.map(it => {
         if (it.id === roleId) {
-          return { ...it, status: checked ? 1 : 2 }
+          return { ...it, ...rs.data }
         } else {
           return it
         }
@@ -100,7 +114,15 @@ const Role = (): JSX.Element => {
     {
       title: '状态',
       render(row: any) {
-        return <Switch loading={loading === row.id} checkedChildren="开启" onChange={(checked) => handleStatus(row.id, checked)} unCheckedChildren="锁定" checked={row.status === 1} defaultChecked={row.status === 1} />
+        return <Popconfirm
+          title={`确认${row.status !== 1 ? '开启' : '锁定'} `}
+          onConfirm={() => handleRoleChange({ roleId: row.id, status: (row.status !== 1 ? 1 : 2) })}
+          onCancel={handleCancel}
+          okText="确认"
+          cancelText="取消"
+        >
+          <Switch loading={loading === row.id} checkedChildren="开启" unCheckedChildren="锁定" checked={row.status === 1} />
+        </Popconfirm>
       }
     },
     {
@@ -108,7 +130,7 @@ const Role = (): JSX.Element => {
       render(row: any) {
         return (
           <>
-            <Button type="link">编辑</Button>
+            <Button type="link" onClick={() => { showModal({ title: '修改角色', roleId: row.id, name: row.name, description: row.description }) }}>编辑</Button>
           </>
         )
       }
@@ -123,41 +145,12 @@ const Role = (): JSX.Element => {
         </div>}
         extra={
           <>
-            <Button type="link" onClick={showModal}>
+            <Button type="link" onClick={() => { showModal({ title: '添加角色' }) }}>
               添加角色
             </Button>
           </>
         }
       >
-        <Flex wrap gap="small" style={{ marginBottom: '10px' }}>
-          <Modal
-            title="角色名称"
-            open={isModalOpen}
-            onOk={handleOk}
-            onCancel={handleCancel}
-          >
-            <Form form={form} name="add_role_form">
-              <Form.Item
-                label="角色名称"
-                name="name"
-                rules={[
-                  { required: true, message: '请填写角色名称' }
-                ]}
-              >
-                <Input />
-              </Form.Item>
-              <Form.Item
-                label="描述"
-                name="description"
-                rules={[
-                  { required: true, message: '请填写描述' }
-                ]}
-              >
-                <TextArea />
-              </Form.Item>
-            </Form>
-          </Modal>
-        </Flex>
         <Table
           dataSource={data}
           columns={columns}
@@ -172,6 +165,38 @@ const Role = (): JSX.Element => {
             showTotal: (total) => `共${total}条记录 `
           }}
         />
+        <Flex wrap gap="small" style={{ marginBottom: '10px' }}>
+          <Modal
+            title={modal.title}
+            open={isModalOpen}
+            onOk={handleOk}
+            onCancel={handleCancel}
+          >
+            <Form form={form} name="role_form">
+              <Form.Item name="roleId" initialValue="0" style={{ display: 'none' }}>
+                <Input type="hidden" name='roleId' />
+              </Form.Item>
+              <Form.Item
+                label="角色名称"
+                name="name"
+                rules={[
+                  { required: true, message: '请填写角色名称' }
+                ]}
+              >
+                <Input autoComplete="off" />
+              </Form.Item>
+              <Form.Item
+                label="描述"
+                name="description"
+                rules={[
+                  { required: false, message: '请填写描述' }
+                ]}
+              >
+                <TextArea autoComplete="off" />
+              </Form.Item>
+            </Form>
+          </Modal>
+        </Flex>
       </Card>
     </div>
   )

@@ -78,8 +78,8 @@ export function roleCreate (name:string, description:string) : Promise<Result<an
   return request.post('/admin/authority/role/create', { name, description })
 }
 
-export function roleChange (roleId:number, status:number) : Promise<Result<any>> {
-  return request.post('/admin/authority/role/change', { roleId, status })
+export function roleChange ({ roleId, status, name, description }:any) : Promise<Result<any>> {
+  return request.post('/admin/authority/role/change', { roleId, status, name, description })
 }
 
 export function getTwoStepConfig () : Promise<Result<any>> {

@@ -1,5 +1,4 @@
 import React, { useEffect, useRef, useState } from 'react'
-import { Link } from 'react-router-dom'
 import {
   Button,
   Card,
@@ -8,6 +7,7 @@ import {
   Input,
   message,
   Modal,
+  Popconfirm,
   Switch,
   Table
 } from 'antd'
@@ -25,7 +25,7 @@ const User = (): JSX.Element => {
 
   const [isModalOpen, setIsModalOpen] = useState(false)
 
-  const showModal = () => {
+  const showModal = ({ title, roleId, name, description }: any) => {
     setIsModalOpen(true)
   }
 
@@ -101,9 +101,25 @@ const User = (): JSX.Element => {
       key: 'name'
     },
     {
+      title: '角色',
+      dataIndex: 'role',
+      key: 'role',
+      render(roles: any[]) {
+        return <p style={{ fontSize: 12 }}>{roles.map((it) => it.name).join(',')}</p>
+      }
+    },
+    {
       title: '状态',
       render(row: any) {
-        return <Switch loading={loading === row.id} checkedChildren="开启" onChange={(checked) => handleStatus(row.id, checked)} unCheckedChildren="锁定" checked={row.status === 1} defaultChecked={row.status === 1} />
+        return <Popconfirm
+          title={`确认${row.status !== 1 ? '开启' : '锁定'} `}
+          onConfirm={() => handleStatus(row.id, row.status !== 1)}
+          onCancel={handleCancel}
+          okText="确认"
+          cancelText="取消"
+        >
+          <Switch loading={loading === row.id} checkedChildren="开启" unCheckedChildren="锁定" checked={row.status === 1} />
+        </Popconfirm>
       }
     },
     {
@@ -132,6 +148,20 @@ const User = (): JSX.Element => {
           </>
         }
       >
+        <Table
+          dataSource={data}
+          columns={columns}
+          rowKey="id"
+          pagination={{
+            showSizeChanger: true,
+            defaultPageSize: params.pageSize,
+            total: params.total,
+            onChange: (page, pageSize) => {
+              setParams({ ...params, page, pageSize })
+            },
+            showTotal: (total) => `共${total}条记录 `
+          }}
+        />
         <Flex wrap gap="small" style={{ marginBottom: '10px' }}>
           <Modal
             title="添加用户"
@@ -162,20 +192,6 @@ const User = (): JSX.Element => {
             </Form>
           </Modal>
         </Flex>
-        <Table
-          dataSource={data}
-          columns={columns}
-          rowKey="id"
-          pagination={{
-            showSizeChanger: true,
-            defaultPageSize: params.pageSize,
-            total: params.total,
-            onChange: (page, pageSize) => {
-              setParams({ ...params, page, pageSize })
-            },
-            showTotal: (total) => `共${total}条记录 `
-          }}
-        />
       </Card>
     </div>
   )
