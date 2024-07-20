@@ -133,7 +133,7 @@ const User = (): JSX.Element => {
       ...roleModal,
       open: true,
       userId,
-      selectedRoles: role.map((it) => Number(it.roleId))
+      selectedRoles: role.map((it) => Number(it.role_id))
     })
   }
   const handleSaveRole = () => {
