@@ -54,6 +54,9 @@ module.exports = {
   webpack: {
     configure: (webpackConfig, { paths }) => {
       paths.appBuild = path.resolve(__dirname, 'dist')
+      if (process.env.BUILD_ENV) {
+        webpackConfig.devtool = false
+      }
       webpackConfig.output.path = path.resolve(__dirname, 'dist')
       webpackConfig.output.library = `${appName}-[name]`
       webpackConfig.output.libraryTarget = 'umd'
@@ -61,7 +64,6 @@ module.exports = {
       webpackConfig.output.filename = `${staticPath}/js/[name].[fullhash:8].bundle.js`
       webpackConfig.output.chunkLoadingGlobal = `webpackJsonp_${appName}`
       webpackConfig.output.globalObject = 'window'
-      // webpackConfig.resolve.symlinks = false
       return webpackConfig
     }
   },

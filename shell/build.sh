@@ -63,6 +63,7 @@ deploy() {
   done
 
   rm -rf $SOURCE_CODE_DIR/dist
+  rm -rf $SOURCE_CODE_DIR/cdn
 }
 
 init

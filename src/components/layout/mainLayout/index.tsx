@@ -45,6 +45,7 @@ const MainLayout = (props: Props) => {
     })
 
     start({
+      sandbox: { strictStyleIsolation: true }, //  主应用与子应用样式隔离
       prefetch: false,
       excludeAssetFilter: (assetUrl) => {
         const whiteList = config.qiankun.excludeAssetWhiteList
